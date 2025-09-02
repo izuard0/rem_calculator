@@ -1,110 +1,218 @@
-# remun_calc.py
+import streamlit as st
+import pandas as pd
 
-# Data poin telah diupdate dan dilengkapi berdasarkan Rubrik Remunerasi 2025
-kegiatan_poin = {
-    # --- Kategori: Membimbing ---
-    'A01': {'nama': 'Bimbingan Akademik', 'poin': 0.06, 'satuan': 'Per Mhs'},
-    'A02': {'nama': 'Bimbingan PPL/Magang/Kerja Praktek', 'poin': 0.1, 'satuan': 'Per Mhs'},
-    'A03': {'nama': 'Membimbing Disertasi (Pembimbing Pendamping)', 'poin': 3.7, 'satuan': 'Per Mhs/Dosen'},
-    'A04': {'nama': 'Membimbing Disertasi (Pembimbing Utama)', 'poin': 4.6, 'satuan': 'Per Mhs/Dosen'},
-    'A05': {'nama': 'Membimbing MBKM', 'poin': 0.4, 'satuan': 'Per Mhs'},
-    'A06': {'nama': 'Membimbing Mahasiswa Praktek Klinik', 'poin': 0.2, 'satuan': 'Per Pertemuan'},
-    'A07': {'nama': 'Membimbing Praktikum/Tugas Terstruktur', 'poin': 0.1, 'satuan': 'Per Mhs'},
-    'A08': {'nama': 'Membimbing Skripsi', 'poin': 0.85, 'satuan': 'Per Mhs/Dosen'},
-    'A09': {'nama': 'Membimbing Tesis (Pembimbing Pendamping)', 'poin': 1.35, 'satuan': 'Per Mhs/Dosen'},
-    'A10': {'nama': 'Membimbing Tesis (Pembimbing Utama)', 'poin': 1.6, 'satuan': 'Per Mhs/Dosen'},
-    'A11': {'nama': 'Membimbing Tugas Akhir Diploma 3', 'poin': 0.85, 'satuan': 'Per Mhs/Dosen'},
-    'A12': {'nama': 'Membimbing Tugas Akhir Profesi', 'poin': 0.85, 'satuan': 'Per Mhs/Dosen'},
-    'A13': {'nama': 'Membimbing Uji Kompetensi Fak. Kedokteran', 'poin': 1.5, 'satuan': 'Per Mata Kuliah'},
-    'A14': {'nama': 'Pembimbing Kompetisi Belmawa', 'poin': 0.45, 'satuan': 'Judul Yang Lolos'},
-    'A15': {'nama': 'Pembina Lembaga Kemahasiswaan', 'poin': 0.45, 'satuan': 'Per UKM'},
-    'A16': {'nama': 'Pengampu peer teaching PPL', 'poin': 0.1, 'satuan': 'Per Mhs'},
-    'A17': {'nama': 'Pengampu/Pembekalan PPL/KKN', 'poin': 0.2, 'satuan': 'Per Pertemuan'},
-    # --- Kategori: Mengabdi ---
-    'B01': {'nama': 'Anggota Penelitian', 'poin': 1.2, 'satuan': 'Per Judul'},
-    'B02': {'nama': 'Ketua Penelitian', 'poin': 1.8, 'satuan': 'Per Judul'},
-    # --- Kategori: Mengajar ---
-    'C01': {'nama': 'Melakukan Pemeriksaan Dalam Dengan Pembimbingan', 'poin': 3.0, 'satuan': 'Per SKS'},
-    'C02': {'nama': 'Membuat Buku Ajar ber ISBN', 'poin': 5.0, 'satuan': 'Per Buku'},
-    'C03': {'nama': 'Membuat Soal (bukan untuk mata kuliah)', 'poin': 0.1, 'satuan': 'Per Naskah'},
-    'C04': {'nama': 'Mengajar Kelas Internasional', 'poin': 0.05, 'satuan': 'Per Mahasiswa/SKS'},
-    'C05': {'nama': 'Mengajar Kelas Reguler Sore & Malam', 'poin': 0.03, 'satuan': 'Per Mahasiswa/SKS'},
-    'C06': {'nama': 'Mengajar Matrikulasi', 'poin': 0.25, 'satuan': 'Per Pertemuan'},
-    'C07': {'nama': 'Mengajar pada Program D3/S1 Reguler Pagi', 'poin': 25.0, 'satuan': 'Per Mahasiswa/SKS'},
-    'C08': {'nama': 'Mengajar pada Program Profesi', 'poin': 0.05, 'satuan': 'Per Mahasiswa/SKS'},
-    'C09': {'nama': 'Mengajar pada Program S2/Magister', 'poin': 2.0, 'satuan': 'Per SKS'},
-    'C10': {'nama': 'Mengajar pada Program S3/Doktor', 'poin': 3.0, 'satuan': 'Per SKS'},
-    'C11': {'nama': 'Menjadi Saksi Ahli Dengan Pembimbingan', 'poin': 1.0, 'satuan': 'Per SKS'},
-    # --- Kategori: Menguji ---
-    'D01': {'nama': 'Menguji Disertasi Ujian Terbuka', 'poin': 1.0, 'satuan': 'Per Mhs'},
-    'D02': {'nama': 'Menguji Disertasi Ujian Tertutup', 'poin': 1.0, 'satuan': 'Per Mhs'},
-    'D03': {'nama': 'Menguji Kelayakan/Kolokium Disertasi', 'poin': 0.28, 'satuan': 'Per Mhs'},
-    'D04': {'nama': 'Menguji Skripsi', 'poin': 0.15, 'satuan': 'Per Mhs'},
-    'D05': {'nama': 'Menguji Tesis', 'poin': 0.6, 'satuan': 'Per Mhs'},
-    'D06': {'nama': 'Menguji proposal/seminar hasil skripsi', 'poin': 0.15, 'satuan': 'Per Mhs'},
-    'D07': {'nama': 'Pengawas Ujian', 'poin': 0.18, 'satuan': 'Per Mata Kuliah'},
-    # --- Kategori: Penjunjang ---
-    'E01': {'nama': 'Anggota Dewan Pengawas Rumah Sakit', 'poin': 2.7, 'satuan': 'Per Smt'},
-    'E02': {'nama': 'Anggota Kepanitiaan Kegiatan Adhoc', 'poin': 0.45, 'satuan': 'Per Keg'},
-    'E03': {'nama': 'Anggota Tim Adhoc', 'poin': 2.7, 'satuan': 'Per Sem'},
-    'E04': {'nama': 'Anggota Tim Perumus Kebijakan Universitas', 'poin': 4.5, 'satuan': 'Per Sem'},
-    'E05': {'nama': 'Ketua Dewan Pengawas Rumah Sakit', 'poin': 4.5, 'satuan': 'Per Smt'},
-    'E06': {'nama': 'Ketua Tim Perumus Kebijakan Universitas', 'poin': 5.95, 'satuan': 'Per Sem'},
-    'E07': {'nama': 'Wakil Ketua Tim Perumus Kebijakan Universitas', 'poin': 5.95, 'satuan': 'Per Sem'},
-    # --- Kategori: Publikasi ---
-    'F01': {'nama': 'Anggota Penyunting Jurnal Sinta 1 & 2', 'poin': 2.0, 'satuan': 'Per Jurnal/Semester'},
-    'F02': {'nama': 'Jurnal Nasional Terakreditasi S1/S2', 'poin': 14.0, 'satuan': 'Per Judul'},
-    'F03': {'nama': 'Ketua Penyunting Jurnal Sinta 1 & 2', 'poin': 3.0, 'satuan': 'Per Jurnal/Semester'},
-    'F04': {'nama': 'Mitra Bestari (Reviewer) Jurnal Sinta 1 & 2', 'poin': 1.0, 'satuan': 'Per Naskah'},
-    'F05': {'nama': 'Publikasi Jurnal Internasional Q1', 'poin': 45.0, 'satuan': 'Per Judul'},
-    'F06': {'nama': 'Publikasi Jurnal Internasional Q2', 'poin': 41.0, 'satuan': 'Per Judul'},
-    'F07': {'nama': 'Publikasi Jurnal Internasional Q3', 'poin': 37.0, 'satuan': 'Per Judul'},
-    'F08': {'nama': 'Publikasi Jurnal Internasional Q4', 'poin': 26.0, 'satuan': 'Per Judul'},
+# Data rubrik remunerasi berdasarkan SK 2025
+remun_data = {
+    'A. MENGAJAR': {
+        'Mengajar pada Program Diploma 3/Sarjana Reguler Kelas Pagi': {'unit': 'Per Mahasiswa/SKS', 'nilai': 0.025},
+        'Mengajar pada Program Magister': {'unit': 'Per SKS', 'nilai': 2},
+        'Mengajar pada Program Doktor': {'unit': 'Per SKS', 'nilai': 3},
+        'Mengajar pada Program Profesi': {'unit': 'Per Mahasiswa/SKS', 'nilai': 0.05},
+        'Mengajar pada Program Diploma 3/Sarjana Kelas Internasional': {'unit': 'Per Mahasiswa/SKS', 'nilai': 0.05},
+        'Mengajar pada Program Diploma 3/Sarjana Reguler Kelas Sore dan Malam': {'unit': 'Per Mahasiswa/SKS', 'nilai': 0.03},
+    },
+    'B. MEMBIMBING': {
+        'Membimbing Skripsi': 0.85,
+        'Bimbingan Akademik': 0.06,
+        'Bimbingan PPL/Magang/Kerja Praktek': 0.1,
+        'Membimbing Disertasi (Pembimbing Pendamping)': 3.7,
+        'Membimbing Disertasi (Pembimbing Utama)': 4.6,
+        'Membimbing MBKM': 0.4,
+        'Membimbing Mahasiswa Praktek Klinik': 0.2,
+        'Membimbing Praktikum/Tugas Terstruktur': 0.1,
+        'Membimbing Tesis (Pembimbing Pendamping)': 1.35,
+        'Membimbing Tesis (Pembimbing Utama)': 1.6,
+        'Membimbing Tugas Akhir Diploma 3': 0.85,
+        'Membimbing Tugas Akhir Profesi': 0.85,
+        'Membimbing Uji Kompetensi Fak. Kedokteran': 1.5,
+        'Pembimbing Kompetisi Belmawa': 0.45,
+        'Pembina Lembaga Kemahasiswaan': 0.45,
+        'Pengampu peer teaching PPL': 0.1,
+        'Pengampu/Pembekalan PPL/KKN': 0.2,
+    },
+    'C. MENGUJI': {
+        'Menguji Tugas Akhir D3': 0.15,
+        'Menguji seminar proposal/seminar hasil skripsi': 0.15,
+        'Menguji Skripsi': 0.15,
+        'Menguji Tesis': 0.6,
+        'Menguji Disertasi Ujian Tertutup': 1,
+        'Menguji Disertasi Ujian Terbuka': 1,
+    },
+    'D. PENELITIAN': {
+        'Ketua Penelitian': 1.8,
+        'Anggota Penelitian (poin dibagi jumlah anggota)': 1.2,
+    },
+    'E. PENGABDIAN KEPADA MASYARAKAT': {
+        'Ketua Pengabdian': 1,
+        'Anggota Pengabdian (poin dibagi jumlah anggota)': 1,
+    },
+    'F. UNSUR PENUNJANG': {
+        'Kegiatan Sidang Senat': 0.25,
+        'Reviewer Penelitian dan PKM': 0.2,
+        'Asesor BKD': 0.2,
+        'Ketua/Wakil Ketua Kepanitiaan Kegiatan Adhoc': 0.6,
+        'Sekretaris Kepanitiaan Kegiatan Adhoc': 0.45,
+        'Anggota Kepanitiaan Kegiatan Adhoc': 0.45,
+        'Ketua Tim Perumus Kebijakan Universitas': 5.95,
+        'Anggota Tim Perumus Kebijakan Universitas': 4.5,
+        'Anggota Dewan Pengawas Rumah Sakit': 2.7,
+        'Anggota Kepanitiaan Kegiatan Adhoc': 0.45,
+        'Anggota Tim Adhoc': 2.7,
+        'Ketua Dewan Pengawas Rumah Sakit': 4.5,
+        'Wakil Ketua Tim Perumus Kebijakan Universitas': 5.95,
+    },
+     'G. PUBLIKASI': {
+        'Anggota Penyunting Jurnal Sinta 1 & 2'  : 2.0,
+        'Ketua Penyunting Jurnal Sinta 1 & 2'    : 3.0,
+        'Publikasi Ilmiah Jurnal Internasional Q4': 26,
+        'Publikasi Ilmiah Jurnal Internasional Q3': 37,
+        'Publikasi Ilmiah Jurnal Internasional Q2': 41,
+        'Publikasi Ilmiah Jurnal Internasional Q1': 45,
+        'Publikasi Ilmiah Jurnal Nasional Terakreditasi S1 atau S2': 14,
+    }
 }
 
-def hitung_remun():
-    total_poin = 0
-    print("=== Kalkulator Remunerasi Dosen (Rubrik 2025) ===")
-    print("Masukkan kode kegiatan dan jumlahnya. Ketik 'selesai' untuk mengakhiri.")
 
-    while True:
-        print("\n--- Daftar Kode Kegiatan (Umum) ---")
-        for kode, detail in kegiatan_poin.items():
-            print(f"{kode}: {detail['nama']} ({detail['poin']} poin / {detail['satuan']})")
-        
-        kode_input = input("Masukkan Kode Kegiatan (atau 'selesai'): ").upper()
-        if kode_input.lower() == 'selesai':
-            break
+st.set_page_config(layout="wide")
+st.title('🧮 Kalkulator Poin Remunerasi Dosen UNTAN')
+st.info('Kalkulator ini mengacu pada **SK Rektor No. 1080/UN22/HK.02/2025** yang berlaku mulai Semester II Tahun 2025.')
+st.success('For Education Purposes Only. Made with Love by Izu')
+total_poin = 0
 
-        if kode_input not in kegiatan_poin:
-            print("Kode tidak valid, coba lagi.")
-            continue
+# --- TAHAP 1: MENGAJAR ---
+st.header('Tahap 1: A. Kegiatan Mengajar')
+poin_mengajar = 0
+container_mengajar = st.container()
 
-        detail_kegiatan = kegiatan_poin[kode_input]
-        poin_kegiatan = 0
+with container_mengajar:
+    jumlah_kelas = st.number_input('Masukkan jumlah kelas yang diajar:', min_value=0, step=1, key='jumlah_kelas')
+    
+    if jumlah_kelas > 0:
+        cols = st.columns(jumlah_kelas)
+        for i in range(jumlah_kelas):
+            with cols[i]:
+                st.subheader(f'Kelas {i+1}')
+                kegiatan = st.selectbox(
+                    f'Pilih Jenis Program', 
+                    options=list(remun_data['A. MENGAJAR'].keys()), 
+                    key=f'kegiatan_{i}'
+                )
+                
+                info_kegiatan = remun_data['A. MENGAJAR'][kegiatan]
+                poin_satuan = info_kegiatan['nilai']
+                
+                jumlah_sks = st.number_input(f'Jumlah SKS', min_value=0, step=1, key=f'sks_{i}')
+                
+                poin_kelas = 0
+                if 'Per Mahasiswa' in info_kegiatan['unit']:
+                    jumlah_mhs = st.number_input(f'Jumlah Mahasiswa', min_value=0, step=1, key=f'mhs_{i}')
+                    poin_kelas = jumlah_mhs * jumlah_sks * poin_satuan
+                else: # Per SKS
+                    poin_kelas = jumlah_sks * poin_satuan
 
-        try:
-            # --- BLOK LOGIKA BARU UNTUK KALKULASI KHUSUS ---
-            if 'Per Mahasiswa/SKS' in detail_kegiatan['satuan']:
-                print(f"Perhitungan Khusus untuk '{detail_kegiatan['nama']}'")
-                jumlah_mhs = int(input("  -> Masukkan Jumlah Mahasiswa: "))
-                jumlah_sks = int(input("  -> Masukkan Jumlah SKS: "))
-                poin_kegiatan = detail_kegiatan['poin'] * jumlah_mhs * jumlah_sks
-            # --- AKHIR BLOK LOGIKA BARU ---
-            else:
-                jumlah = float(input(f"Masukkan jumlah untuk '{detail_kegiatan['nama']}' (sesuai satuan): "))
-                poin_kegiatan = detail_kegiatan['poin'] * jumlah
-            
-            total_poin += poin_kegiatan
-            print(f"Poin dari kegiatan ini: {poin_kegiatan:.2f}")
-            print(f"Total Poin Saat Ini: {total_poin:.2f}")
+                is_tandem = st.checkbox('Team Teaching?', key=f'tandem_{i}')
+                if is_tandem:
+                    poin_kelas /= 2
+                
+                st.metric(label=f"Poin Kelas {i+1}", value=f"{poin_kelas:.3f}")
+                poin_mengajar += poin_kelas
+    
+    # Menampilkan total poin untuk tahap mengajar
+    st.success(f"**Total Poin Tahap Mengajar: {poin_mengajar:.3f}**")
 
-        except ValueError:
-            print("Jumlah harus berupa angka.")
 
-    print(f"\n================================")
-    print(f"Total Akumulasi Poin Remunerasi: {total_poin:.2f}")
-    print("================================")
+st.markdown("---")
+total_poin += poin_mengajar
 
-if __name__ == "__main__":
-    hitung_remun()
+# --- TAHAP 2: MEMBIMBING ---
+st.header('Tahap 2: B. Kegiatan Membimbing')
+poin_membimbing = 0
+for kegiatan, nilai in remun_data['B. MEMBIMBING'].items():
+    jumlah = st.number_input(f"Jumlah mahasiswa untuk '{kegiatan}'", min_value=0, step=1, key=f"b_{kegiatan}")
+    poin_membimbing += jumlah * nilai
+st.success(f"**Total Poin Tahap Membimbing: {poin_membimbing:.3f}**")
+total_poin += poin_membimbing
+
+st.markdown("---")
+
+
+# --- TAHAP 3: MENGUJI ---
+st.header('Tahap 3: C. Kegiatan Menguji')
+poin_menguji = 0
+for kegiatan, nilai in remun_data['C. MENGUJI'].items():
+    jumlah = st.number_input(f"Jumlah mahasiswa untuk '{kegiatan}'", min_value=0, step=1, key=f"c_{kegiatan}")
+    poin_menguji += jumlah * nilai
+st.success(f"**Total Poin Tahap Menguji: {poin_menguji:.3f}**")
+total_poin += poin_menguji
+
+st.markdown("---")
+
+
+# --- TAHAP 4: PENELITIAN ---
+st.header('Tahap 4: D. Kegiatan Penelitian')
+poin_penelitian = 0
+ketua_penelitian = st.number_input("Jumlah proposal sebagai 'Ketua Penelitian'", min_value=0, max_value=1, step=1)
+poin_penelitian += ketua_penelitian * remun_data['D. PENELITIAN']['Ketua Penelitian']
+
+anggota_penelitian = st.number_input("Jumlah proposal sebagai 'Anggota Penelitian'", min_value=0, step=1)
+if anggota_penelitian > 0:
+    jumlah_anggota = st.number_input("Total anggota dalam tim penelitian tsb:", min_value=1, step=1, key='jml_anggota_penelitian')
+    if jumlah_anggota > 0:
+        poin_penelitian += (anggota_penelitian * remun_data['D. PENELITIAN']['Anggota Penelitian (poin dibagi jumlah anggota)']) / jumlah_anggota
+st.success(f"**Total Poin Tahap Penelitian: {poin_penelitian:.3f}**")
+total_poin += poin_penelitian
+
+st.markdown("---")
+
+
+# --- TAHAP 5: PENGABDIAN ---
+st.header('Tahap 5: E. Kegiatan Pengabdian Kepada Masyarakat')
+poin_pengabdian = 0
+ketua_pengabdian = st.number_input("Jumlah proposal sebagai 'Ketua Pengabdian'", min_value=0, max_value=1, step=1)
+poin_pengabdian += ketua_pengabdian * remun_data['E. PENGABDIAN KEPADA MASYARAKAT']['Ketua Pengabdian']
+
+anggota_pengabdian = st.number_input("Jumlah proposal sebagai 'Anggota Pengabdian'", min_value=0, step=1)
+if anggota_pengabdian > 0:
+    jumlah_anggota_abdi = st.number_input("Total anggota dalam tim pengabdian tsb:", min_value=1, step=1, key='jml_anggota_abdi')
+    if jumlah_anggota_abdi > 0:
+        poin_pengabdian += (anggota_pengabdian * remun_data['E. PENGABDIAN KEPADA MASYARAKAT']['Anggota Pengabdian (poin dibagi jumlah anggota)']) / jumlah_anggota_abdi
+st.success(f"**Total Poin Tahap Pengabdian: {poin_pengabdian:.3f}**")
+total_poin += poin_pengabdian
+
+st.markdown("---")
+
+
+# --- TAHAP 6: PENUNJANG & PUBLIKASI ---
+st.header('Tahap 6: F & G. Kegiatan Penunjang dan Publikasi')
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("F. Unsur Penunjang")
+    poin_penunjang = 0
+    for kegiatan, nilai in remun_data['F. UNSUR PENUNJANG'].items():
+        jumlah = st.number_input(f"Jumlah kegiatan '{kegiatan}'", min_value=0, step=1, key=f"f_{kegiatan}")
+        poin_penunjang += jumlah * nilai
+    st.success(f"**Total Poin Penunjang: {poin_penunjang:.3f}**")
+    total_poin += poin_penunjang
+
+with col2:
+    st.subheader("G. Publikasi")
+    poin_publikasi = 0
+    for kegiatan, nilai in remun_data['G. PUBLIKASI'].items():
+        jumlah = st.number_input(f"Jumlah publikasi '{kegiatan}'", min_value=0, step=1, key=f"g_{kegiatan}")
+        poin_publikasi += jumlah * nilai
+    st.success(f"**Total Poin Publikasi: {poin_publikasi:.3f}**")
+    total_poin += poin_publikasi
+st.markdown("---")
+
+
+# --- TOTAL POIN ---
+st.header('TOTAL AKUMULASI POIN')
+
+st.metric(
+    label="Total Poin Kinerja Anda",
+    value=f"{total_poin:.3f}"
+)
+
+if total_poin > 12:
+    st.balloons()
